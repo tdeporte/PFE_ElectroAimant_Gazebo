@@ -2,9 +2,10 @@
 
 import rospy
 from geometry_msgs.msg import PoseStamped
-from drone_controller import DroneController
+from DroneController import DroneController
 import threading
 import time
+from DroneCamera import DroneCamera
 
 class Drone:
     
@@ -13,6 +14,7 @@ class Drone:
         
         self.rate = rospy.Rate(25.0)
         self.controller = DroneController()
+        self.camera = DroneCamera()
         
         self.pos_pub = rospy.Publisher('/mavros/setpoint_position/local' , PoseStamped , queue_size=10)
         self.pos = PoseStamped()
@@ -64,13 +66,17 @@ if __name__ == '__main__':
         
         drone.controller.setArm()
         drone.setOffboard()
-                
+                        
         drone.setTargetPosition(2.0,2.0,2.0)
         thread = threading.Thread(target= drone.standyTo)
         thread.start()
         
+        drone.camera.start_stream()
         time.sleep(5)
         drone.setTargetPosition(0 , 0 , 2.0)
+        
+        time.sleep(5)
+        drone.camera.stop_stream()
         
         rospy.spin()
         
