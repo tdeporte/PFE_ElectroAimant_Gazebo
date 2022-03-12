@@ -47,4 +47,17 @@ class DroneCamera:
     def stop_stream(self):
       self.stream_camera = False
       rospy.loginfo("STOP STREAM")
+
+    def get_center_QR_code(self):
+      rospy.loginfo("ENTER QR CODE DETECTOR")
+      qrDecoder = cv2.QRCodeDetector()
+      detected,bbox = qrDecoder.detect(self.cv_image)
+      if detected:
+        center = int((bbox[0][0][0] + bbox[0][2][0])/2) , int((bbox[0][0][1] + bbox[0][2][1])/2)
+        rospy.loginfo("QR code center : (%d,%d)", center[0],center[1])
+        return center
+      else:
+          rospy.loginfo("QR Code not detected")
+          return None,None
+
     

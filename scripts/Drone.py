@@ -63,11 +63,10 @@ class Drone:
 if __name__ == '__main__':
     try:
         drone = Drone()
-        
+
         drone.controller.setArm()
         drone.setOffboard()
                         
-        drone.setTargetPosition(2.0,2.0,2.0)
         thread = threading.Thread(target= drone.standyTo)
         thread.start()
         
@@ -75,13 +74,32 @@ if __name__ == '__main__':
         time.sleep(5)
         drone.setTargetPosition(0 , 0 , 2.0)
         
-        time.sleep(5)
-        drone.camera.stop_stream()
-        
+        #time.sleep(5)
+        #drone.camera.stop_stream()
+        height, width, channels = drone.camera.cv_image.shape
+
+        while(1):
+            time.sleep(0.5)
+            center = drone.camera.get_center_QR_code()
+            if(center[0]!=None):
+                if(center[0]<width/2):
+                    rospy.loginfo("GO LEFT")
+                else:
+                    rospy.loginfo("GO RIGHT")
+                
+                if(center[1]<height/2):
+                    rospy.loginfo("GO DOWN")
+                else:
+                    rospy.loginfo("GO UP")
+
+
         rospy.spin()
+
         
-        drone.controller.setAutoLand()
-        drone.controller.setDisarm()
+        #drone.controller.setAutoLand()
+        #drone.controller.setDisarm()
+
+
         
     except rospy.ROSInterruptException:
         rospy.loginfo("ROS Interruption !")
