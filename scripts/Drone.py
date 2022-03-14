@@ -76,24 +76,42 @@ if __name__ == '__main__':
         
         #time.sleep(5)
         #drone.camera.stop_stream()
+
         height, width, channels = drone.camera.cv_image.shape
 
+        tolerance = 50
+        low_width_threshold = width/2 - tolerance
+        high_width_threshold = width/2 + tolerance
+        low_height_threshold = height/2 - tolerance
+        high_height_threshold = height/2 + tolerance
+
+        step =  0.2
         while(1):
             time.sleep(0.5)
             center = drone.camera.get_center_QR_code()
             if(center[0]!=None):
-                if(center[0]<width/2):
-                    rospy.loginfo("GO LEFT")
+                rospy.loginfo("CENTER (%d,%d)",center[0],center[1])
+                if(center[0]<low_width_threshold or center[0]>high_width_threshold
+                or center[1]<low_height_threshold or center[1]>high_height_threshold):
+                    if(center[0]<width/2):
+                        rospy.loginfo("GO LEFT")
+                        drone.moveTo(drone.pos.pose.position.x , drone.pos.pose.position.y + step, drone.pos.pose.position.z)
+                    else:
+                        rospy.loginfo("GO RIGHT")
+                        drone.moveTo(drone.pos.pose.position.x , drone.pos.pose.position.y - step, drone.pos.pose.position.z)
+                    if(center[1]<height/2):
+                        rospy.loginfo("GO BACK")
+                        drone.moveTo(drone.pos.pose.position.x - step , drone.pos.pose.position.y, drone.pos.pose.position.z)
+                    else:
+                        rospy.loginfo("GO FRONT")
+                        drone.moveTo(drone.pos.pose.position.x + step , drone.pos.pose.position.y, drone.pos.pose.position.z)
                 else:
-                    rospy.loginfo("GO RIGHT")
-                
-                if(center[1]<height/2):
-                    rospy.loginfo("GO DOWN")
-                else:
-                    rospy.loginfo("GO UP")
+                    rospy.loginfo("CORRECT POSITION")
+                    break
 
 
-        rospy.spin()
+
+        #rospy.spin()
 
         
         #drone.controller.setAutoLand()
