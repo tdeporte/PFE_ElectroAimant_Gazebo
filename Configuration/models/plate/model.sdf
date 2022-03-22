@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="plate">
+    <pose>0 0 0.75  0 0 0</pose>
+    <static>true</static>
+    <link name="link">
+	<gravity>0</gravity>
+
+      <collision name="collision">
+        <geometry>
+          <box>
+              <size>1.0 0.60 0.60</size>
+          </box>
+        </geometry>
+	<surface>
+          <contact>
+            <ode>
+              <max_vel>0.1</max_vel>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://plate/meshes/model.dae</uri>
+          </mesh>
+	</geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>
