@@ -8,7 +8,7 @@ from DroneController import DroneController
 import threading
 import time
 from DroneCamera import DroneCamera
-
+import sys, getopt
 
 
 class Drone:
@@ -65,7 +65,8 @@ class Drone:
         
     def laser_callback(self,msg):
         self.laser_distance = msg.range
-        rospy.loginfo("DISTANCE FROM PLATE : %f", self.laser_distance)
+        #rospy.loginfo("DISTANCE FROM PLATE : %f", self.laser_distance)
+            
 
 if __name__ == '__main__':
     try:
@@ -84,52 +85,67 @@ if __name__ == '__main__':
         #time.sleep(5)
         #drone.camera.stop_stream()
 
+        #Dimensions de l'image
         height, width, channels = drone.camera.cv_image.shape
 
-        tolerance = 30
+        #Fait varier les dimensions de la cible au centre de l'image
+        tolerance = int(sys.argv[1])
+
+        #Dimensions de la cible au centre de l'image
         low_width_threshold = width/2 - tolerance
         high_width_threshold = width/2 + tolerance
         low_height_threshold = height/2 - tolerance
         high_height_threshold = height/2 + tolerance
 
-        step =  0.2
+        #Distance parcourue par le drone lors du replacement 
+        step =  float(sys.argv[2])
 
+        #Boucle de replacement du drone en dessous du centre du QR code
         while(1):
-            time.sleep(0.5)
+            #Stabilisation du drone 
+            time.sleep(1)
 
+            #Récupération de la distance renvoyée par le laser dans drone.laser_distance 
             sub = rospy.Subscriber('/iris_odom/range_down', Range, drone.laser_callback)
 
+            #Récupération des coordonées du centre du QR code dans l'image
             center = drone.camera.get_center_QR_code()
             
-            if(center[0]!=None):
-                rospy.loginfo("CENTER (%d,%d)",center[0],center[1])
+            #Si on détecte un QR code
+            if(any(map(lambda elem: elem is not None, center))):
+
+                #rospy.loginfo("CENTER (%d,%d)",center[0],center[1])
+
+                #Si le centre du QR code est dans la cible 
                 if(center[0]<low_width_threshold or center[0]>high_width_threshold
                 or center[1]<low_height_threshold or center[1]>high_height_threshold):
+                    #Si le centre du QR code est à gauche du centre de l'image
                     if(center[0]<width/2):
-                        rospy.loginfo("GO LEFT")
+                        #On se déplace sur l'axe y
                         drone.setTargetPosition(drone.pos.pose.position.x , drone.pos.pose.position.y + step, drone.pos.pose.position.z)
+                    #Si le centre du QR code est à droite du centre de l'image    
                     else:
-                        rospy.loginfo("GO RIGHT")
+                        #On se déplace sur l'axe y
                         drone.setTargetPosition(drone.pos.pose.position.x , drone.pos.pose.position.y - step, drone.pos.pose.position.z)
+                    #Si le centre du QR code est en bas du centre de l'image    
                     if(center[1]<height/2):
-                        rospy.loginfo("GO BACK")
+                        #On se déplace sur l'axe x
                         drone.setTargetPosition(drone.pos.pose.position.x - step , drone.pos.pose.position.y, drone.pos.pose.position.z)
+                    #Si le centre du QR code est au dessus du centre de l'image 
                     else:
-                        rospy.loginfo("GO FRONT")
+                        #On se déplace sur l'axe x
                         drone.setTargetPosition(drone.pos.pose.position.x + step , drone.pos.pose.position.y, drone.pos.pose.position.z)
+                #Si le centre du QR code est au centre de l'image
                 else:
-                    rospy.loginfo("CORRECT POSITION")
+                    #Tant que le laser renvoit  une distance avec la plaque supérieure à 0.1
+                    while(drone.laser_distance<0.1):
+                        time.sleep(0.5)
+                        #On fait monter le drone
+                        drone.setTargetPosition(drone.pos.pose.position.x , drone.pos.pose.position.y, drone.pos.pose.position.z + step)
                     break
-
-
-
         rospy.spin()
-
-        
         drone.controller.setAutoLand()
-        drone.controller.setDisarm()
+        drone.controller.setDisarm()    
 
-
-        
     except rospy.ROSInterruptException:
         rospy.loginfo("ROS Interruption !")
