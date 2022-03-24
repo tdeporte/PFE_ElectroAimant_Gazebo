@@ -78,9 +78,7 @@ class DroneTests(unittest.TestCase):
             
             self.pos_pub.publish(self.pos)
             self.rate.sleep()
-            
-        rospy.loginfo("OFFBOARD PREPARATION")
-            
+                        
     def moveTo(self , x , y , z):
         for j in range(500):
             self.pos.pose.position.x = x
@@ -89,9 +87,7 @@ class DroneTests(unittest.TestCase):
             
             self.pos_pub.publish(self.pos)
             self.rate.sleep()
-        
-        rospy.loginfo("MOVE TO : " + str(x) + " " +  str(y) + " " + str(z) )
-    
+            
     #
     # Tests methods
     #
@@ -145,7 +141,6 @@ class DroneTests(unittest.TestCase):
         if(distance < 0.3):
             good_position = True
             
-        rospy.loginfo("DISTANCE : " + str(distance) )
         self.assertTrue(good_position , 
         ("Move to position failed | Position distance: {0}".
             format(distance)))
@@ -162,7 +157,6 @@ class DroneTests(unittest.TestCase):
             self.mode_service(base_mode = 0 , custom_mode=str(key))
             
             time.sleep(1)
-            rospy.loginfo("Mode : " + str(self.state.mode) + " Key : " + str(key))
             if( str(self.state.mode) == str(key) ):
                 self.changed_mode[key] = True
             

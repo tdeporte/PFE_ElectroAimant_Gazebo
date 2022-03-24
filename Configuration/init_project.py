@@ -50,7 +50,6 @@ if __name__ == '__main__':
         copy_dir(models_path_current , "plate" , models_path_destination)
         
         copy_all(world_path_current , world_path_destination)
-        copy_all("Library/" , sitl_path_destination)
     else:
         print("One argument required ! The argument must be the path to the PX4-Autopilot folder")
     
