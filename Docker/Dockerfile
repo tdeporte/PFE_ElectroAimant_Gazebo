@@ -16,9 +16,9 @@ RUN apt-get install -y python3-catkin-tools \
     python3-osrf-pycommon python3-rosdep python3-vcstool git \
     libgeographic-dev ros-noetic-geographic-msgs python3-pip zip qtcreator cmake \
     build-essential genromfs ninja-build exiftool \
-    python3-dev python-is-python3 libxml2 libxml2-dev libxslt-dev
+    python3-dev python-is-python3 libxml2 libxml2-dev libxslt-dev qt5-default
 
-RUN pip3 install -U lxml future numpy==1.19
+RUN pip3 install -U lxml future numpy==1.19 opencv-python==4.5.3.56
 
 #   Set up catkin workspace  
 RUN mkdir -p ~/catkin_ws/src && cd ~/catkin_ws \
@@ -83,4 +83,6 @@ RUN echo 'export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:~/repos/PX4-Autopilot/bu
     
 RUN source /opt/ros/noetic/setup.bash
 
-CMD cat ~/.bashrc && source ~/.bashrc && rospack find mavros_posix_sitl && roslaunch px4 mavros_posix_sitl.launch
+WORKDIR root/repos/
+
+CMD exec bash && make px4_sitl gazebo
