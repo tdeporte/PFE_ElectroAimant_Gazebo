@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
   <model name="plate">
-    <pose>0 0 0.75  0 0 0</pose>
+    <pose>0 0 0 0 0 0</pose>
     <static>true</static>
     <link name="link">
 	<gravity>0</gravity>
@@ -9,7 +9,7 @@
       <collision name="collision">
         <geometry>
           <box>
-              <size>1.0 0.60 0.60</size>
+              <size>1.2 0.80 0.80</size>
           </box>
         </geometry>
 	<surface>

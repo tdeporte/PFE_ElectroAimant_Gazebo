@@ -29,10 +29,6 @@ class DroneController:
     def setAutoLand(self):
         self.mode_service(base_mode = 0 , custom_mode="AUTO.LAND")
         rospy.loginfo("AUTOLAND MODE SET")
-        
-    def setHold(self):
-        self.mode_service(base_mode = 0 , custom_mode="ALTCTL")
-        rospy.loginfo("HOLD MODE SET")
     
     def setCmdVel(self , x , y , z):
         speed = TwistStamped()

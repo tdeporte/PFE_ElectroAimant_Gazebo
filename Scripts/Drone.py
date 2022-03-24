@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from numpy import float64
 import rospy
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Range
@@ -8,30 +7,37 @@ from DroneController import DroneController
 import threading
 import time
 from DroneCamera import DroneCamera
-import sys, getopt
-
-
-from gazebo_msgs.msg import ODEPhysics
-from geometry_msgs.msg import Vector3
-from gazebo_msgs.srv import SetPhysicsProperties
-from std_msgs.msg import Float64
+import sys
+from std_srvs.srv import Empty, EmptyRequest  
+from pynput import keyboard
+from mavros_msgs.msg import State
 
 class Drone:
     
     def __init__(self):
         rospy.init_node('drone' , anonymous=True)
         
-        self.rate = rospy.Rate(25.0)
+        self.rate = rospy.Rate(10.0)
         self.controller = DroneController()
         self.camera = DroneCamera()
         
-        self.gravity_service = rospy.ServiceProxy('/gazebo/set_physics_properties', SetPhysicsProperties)
+        self.pause_sim = rospy.ServiceProxy('/gazebo/pause_physics' , Empty)
+        self.unpause_sim = rospy.ServiceProxy('/gazebo/unpause_physics' , Empty)
         
         self.pos_pub = rospy.Publisher('/mavros/setpoint_position/local' , PoseStamped , queue_size=10)
         self.pos = PoseStamped()
+        
+        self.current_pos_sub = rospy.Subscriber('/mavros/local_position/pose' , PoseStamped , self.current_pos_callback)
+        self.current_pos = PoseStamped()
+        
+        self.state_sub = rospy.Subscriber('mavros/state', State, self.state_callback)
+        self.state = State()
 
         self.laser_distance = 0.0    
         self.thread_on = True
+        self.phase = 1
+        
+        self.center_pos = PoseStamped()
         
     def moveTo(self , x , y , z):
         for j in range(100):
@@ -44,14 +50,22 @@ class Drone:
         
         rospy.loginfo("MOVE TO : " + str(x) + " " +  str(y) + " " + str(z) )
             
+    def current_pos_callback(self, data):
+        self.current_pos = data
+        
+    def state_callback(self, data):
+        self.state = data
+    
     def moveToWayPoints(self, list):
         for pos in list:
             self.moveTo(pos[0] , pos[1], pos[2])
             
-    def standyTo(self):
-        while not rospy.is_shutdown() and (self.thread_on == True):
-            self.pos_pub.publish(self.pos)
-            self.rate.sleep()
+    def standbyTo(self):
+        while not rospy.is_shutdown():
+            if( self.thread_on == True ):
+                # rospy.loginfo("standby")
+                self.pos_pub.publish(self.pos)
+                self.rate.sleep()
             
     def setTargetPosition(self, x , y , z):
         self.pos.pose.position.x = x
@@ -71,26 +85,52 @@ class Drone:
         
         self.controller.setOffboard()
         
-    def laser_callback(self,msg):
+    def laserCallback(self,msg):
         self.laser_distance = msg.range
-        #rospy.loginfo("DISTANCE FROM PLATE : %f", self.laser_distance)
+    
+    def on_press(self ,key):
+        try:
+            if(key.char == "l"):
+                self.thread_on = True
+                self.controller.setArm()
+                # self.setOffboard()
+                rospy.loginfo("Launching ...")
+                self.phase = 1
+                drone.setTargetPosition(self.pos.pose.position.x, self.pos.pose.position.y , self.current_pos.pose.position.z + 1 )
+            elif(key.char == "p"):
+                self.phase = 0
+
+        except AttributeError:
+            print('special key pressed: {0}'.format(key))
+            
+    def listenKey(self):
+        with keyboard.Listener(on_press=drone.on_press) as listener:
+            listener.join()
             
 
 
 if __name__ == '__main__':
     try:
         drone = Drone()
-        drone.controller.setArm()
-        drone.setOffboard()
-                        
-        thread = threading.Thread(target= drone.standyTo)
-        thread.start()
-        
-        drone.camera.start_stream()
-        time.sleep(5)
-        drone.setTargetPosition(0, 0 , 1)
     
-
+        # drone.controller.setArm()
+        # drone.setOffboard()
+        
+        #Récupération de la distance renvoyée par le laser dans drone.laser_distance 
+        sub = rospy.Subscriber('/iris_odom/range_down', Range, drone.laserCallback)
+                        
+        thread_standby = threading.Thread(target= drone.standbyTo)
+        thread_standby.start()
+        
+        thread_key = threading.Thread(target= drone.listenKey)
+        thread_key.start()
+        
+        time.sleep(2)
+        
+        rospy.loginfo("LISTEN KEY READY")
+        
+        # drone.setTargetPosition(0, 0 , 1)
+    
         #Dimensions de l'image
         height, width, channels = drone.camera.cv_image.shape
 
@@ -111,16 +151,11 @@ if __name__ == '__main__':
             #Stabilisation du drone 
             time.sleep(1)
 
-            #Récupération de la distance renvoyée par le laser dans drone.laser_distance 
-            sub = rospy.Subscriber('/iris_odom/range_down', Range, drone.laser_callback)
-
             #Récupération des coordonées du centre du QR code dans l'image
             center = drone.camera.get_center_QR_code()
             
             #Si on détecte un QR code
             if(any(map(lambda elem: elem is not None, center))):
-
-                #rospy.loginfo("CENTER (%d,%d)",center[0],center[1])
 
                 #Si le centre du QR code est dans la cible 
                 if(center[0]<low_width_threshold or center[0]>high_width_threshold
@@ -143,15 +178,36 @@ if __name__ == '__main__':
                         drone.setTargetPosition(drone.pos.pose.position.x + step , drone.pos.pose.position.y, drone.pos.pose.position.z)
                 #Si le centre du QR code est au centre de l'image
                 else:
-                    #Tant que le laser renvoit  une distance avec la plaque supérieure à 0.1
-                    while(drone.laser_distance<0.1):
-                        time.sleep(0.5)
-                        #On fait monter le drone
-                        drone.setTargetPosition(drone.pos.pose.position.x , drone.pos.pose.position.y, drone.pos.pose.position.z + step)
+                    drone.center_pos.pose.position.x = drone.current_pos.pose.position.x
+                    drone.center_pos.pose.position.y = drone.current_pos.pose.position.y
+                    drone.center_pos.pose.position.z = drone.current_pos.pose.position.z
+                    rospy.loginfo("QR Code find")
                     break
-        rospy.spin()
+
+        time.sleep(0.5)
+                
+        while(1):
+                
+            if(drone.phase == 1):
+                #Tant que le laser renvoit  une distance avec la plaque supérieure à 0.1
+                if(drone.laser_distance > 0.15):
+                    time.sleep(0.5)
+                    drone.setTargetPosition(drone.center_pos.pose.position.x , drone.center_pos.pose.position.y, drone.current_pos.pose.position.z + step + 0.1 )
+                else:
+                    drone.thread_on = False
+                    drone.pause_sim(EmptyRequest())
+            elif(drone.phase == 0):
+                time.sleep(2)
+                rospy.loginfo("Landing ...")
+                drone.unpause_sim( EmptyRequest())
+                drone.phase = -1
+                
+        
+        
         drone.controller.setAutoLand()
-        drone.controller.setDisarm()    
+        drone.controller.setDisarm()          
+        rospy.spin()
+          
 
     except rospy.ROSInterruptException:
         rospy.loginfo("ROS Interruption !")
