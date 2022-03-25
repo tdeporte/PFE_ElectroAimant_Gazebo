@@ -15,10 +15,21 @@ class Drone:
     
     def __init__(self):
         rospy.init_node('drone' , anonymous=True)
+
+        #Si des arguments de tolerance et step sont donnée sinon on donne des valeurs par défaut
+        if( len(sys.argv) >= 3 ):
+            #Fait varier les dimensions de la cible au centre de l'image
+            self.tolerance = int(sys.argv[1])
+            
+            #Distance parcourue par le drone lors du replacement 
+            self.step = float(sys.argv[2])
+        else:
+            self.tolerance = 30
+            self.step = 0.2
         
         self.rate = rospy.Rate(10.0)
         self.controller = DroneController() #Objet controller du drone
-        self.camera = DroneCamera() #Objet camera du drone
+        self.camera = DroneCamera(self.tolerance) #Objet camera du drone
         self.thread_on = True #Si True envoie une position au drone sinon non
         self.phase = 1 #Phase du drone (docking = 1 / undocking = 0)
         self.center_pos = PoseStamped() #Position du centre du qr code
@@ -40,16 +51,7 @@ class Drone:
         self.current_pos_sub = rospy.Subscriber('/mavros/local_position/pose' , PoseStamped , self.current_pos_callback)
         self.current_pos = PoseStamped()
         
-        #Si des arguments de tolerance et step sont donnée sinon on donne des valeurs par défaut
-        if( len(sys.argv) >= 3 ):
-            #Fait varier les dimensions de la cible au centre de l'image
-            self.tolerance = int(sys.argv[1])
-            
-            #Distance parcourue par le drone lors du replacement 
-            self.step = float(sys.argv[2])
-        else:
-            self.tolerance = 30
-            self.step = 0.2
+        
             
     #Fonction callback du topic de position courante du drone
     def current_pos_callback(self, data):
