@@ -189,52 +189,69 @@ python3 DroneTest.py 2 2 1 #La position x , y , z est initialisée avec ces coor
 
 ## Version "conteneurisée" du projet
 
-Une image contenant le projet dans sa totalité est disponible à l'adresse : [Link](https://hub.docker.com/repository/docker/tdeporte/ros_sitl_gazebo) .
+Une image contenant le projet dans sa totalité est disponible à l'adresse : 
+
+[https://hub.docker.com/repository/docker/tdeporte/ros_sitl_gazebo](https://hub.docker.com/repository/docker/tdeporte/ros_sitl_gazebo) .
+
 Cette image est publique et son Dockerfile associé est disponible dans le dossier **Docker/** du projet.
 
 Les étapes suivantes sont nécéssaires avant de pouvoir l'utiliser.
 
 ### Installation de Docker 
 
-Nous vous recommandons de suivre l'installation correspondant à votre envirronement de travail, disponible l'adresse : [Link](https://docs.docker.com/get-docker/) .
+Nous vous recommandons de suivre l'installation correspondant à votre envirronement de travail, disponible l'adresse : 
+
+[https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/) .
 
 ### Récupération de l'image 
 
 L'image est publique et récupérable grâce à la commande suivante.
+
 `docker pull tdeporte/ros_sitl_gazebo:latest`
 
 ### Prodiguer les permissions nécéssaires
 L'outils **xauth** est nécéssaire pour cette étape.
+
 `sudo apt-get install -y xauth`
 
 Il est nécéssaire de prodiguer au conteneur l'authorisation de communiquer avec la machine hôte.
+
 `xhost +local:*`
 
 Nous recommandons cependant d'annuler l'authorisation après l'arrêt du conteneur.
+
 `xhost -local:*`
 
 ### Lancement du conteneur
 Nous préférons lancer le conteneur en tâche de fond dans un premier temps.
+
 `docker run -dit --net=host -e DISPLAY -v /tmp/.X11-unix tdeporte/ros_sitl_gazebo`
+
 L'identifiant du conteneur nommé plus tard CONTAINER_ID apparait en réponse.
 
 ### Lancer une commande dans le conteneur
 Afin d'observer le projet nous recommandons de lancer la commande suivante dans deux terminaux.
+
 `docker exec -it CONTAINER_ID bash`
+
 Il est alors possible de naviguer comme si le projet était en local.
 
 ### Démarrer le logiciel
 Dans un terminal, écrire 
+
 ```
 source ~/.bashrc 
 roslaunch px4 custom.launch
 ```
-La fenêtre de GAzebo affichant la simulation s'ouvre en local.
+
+La fenêtre de Gazebo affichant la simulation s'ouvre en local.
 
 ### Démarrer le script de controle du drone
 Dans un autre terminal, écrire
+
 ```
 cd PFE_ElectroAimant_Gazebo/Scripts
 python3 Drone.py
 ```
+
 Le retour caméra du drone s'ouvre en local et vous pouvez alors controler le drone.
