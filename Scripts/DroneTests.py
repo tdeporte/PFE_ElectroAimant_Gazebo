@@ -9,6 +9,7 @@ from sensor_msgs.msg import Image
 from mavros_msgs.msg import State
 import time
 import math
+import sys
 
 PKG = 'px4'
 
@@ -26,7 +27,11 @@ class DroneTests(unittest.TestCase):
         self.changed_mode = {"AUTO.LOITER" : False , "AUTO.LAND" : False}
         self.topics_ready = {'local_pos' : False , 'camera' : False , 'state' : False}
         self.tests_ready = False
-        self.position_test = (2 , 2 , 1)
+        
+        if( len(sys.argv) != 4):
+            self.position_test = (2 , 2 , 1)
+        else:
+            self.position_test = ( float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3]) )
         
         self.rate = rospy.Rate(25.0)
         self.pos = PoseStamped()
@@ -42,7 +47,7 @@ class DroneTests(unittest.TestCase):
         
         self.pos_pub = rospy.Publisher('/mavros/setpoint_position/local' , PoseStamped , queue_size=10)
         
-        time.sleep(3)
+        time.sleep(5)
 
     #
     # Callback functions
@@ -70,7 +75,7 @@ class DroneTests(unittest.TestCase):
     # Helper methods
     #
     
-    def setOffboard(self):
+    def set_offboard(self):
         for j in range(100):
             self.pos.pose.position.x = 0.0
             self.pos.pose.position.y = 0.0
@@ -79,7 +84,7 @@ class DroneTests(unittest.TestCase):
             self.pos_pub.publish(self.pos)
             self.rate.sleep()
                         
-    def moveTo(self , x , y , z):
+    def move_to(self , x , y , z):
         for j in range(500):
             self.pos.pose.position.x = x
             self.pos.pose.position.y = y
@@ -92,7 +97,8 @@ class DroneTests(unittest.TestCase):
     # Tests methods
     #
     
-    def test_subscribers(self):        
+    def test_subscribers(self):   
+        rospy.loginfo("Subscribers test")     
         time.sleep(self.timeout)
 
         for value in self.topics_ready.values():
@@ -108,7 +114,8 @@ class DroneTests(unittest.TestCase):
         
     
     def test_arming(self):
-        self.controller.setArm()
+        rospy.loginfo("Arming test")
+        self.controller.set_arm()
         time.sleep(1)
         
         self.assertTrue(self.state.armed , 
@@ -116,7 +123,8 @@ class DroneTests(unittest.TestCase):
             format(self.state.armed)))
         
     def test_disarming(self):
-        self.controller.setDisarm()
+        rospy.loginfo("Disarming test")
+        self.controller.set_disarm()
         time.sleep(1)
         
         self.assertTrue(not self.state.armed , 
@@ -125,12 +133,13 @@ class DroneTests(unittest.TestCase):
         
         
     def test_position(self):
+        rospy.loginfo("Position test")
         good_position = False
         
-        self.controller.setArm()
-        self.setOffboard()
+        self.controller.set_arm()
+        self.set_offboard()
         self.mode_service(base_mode = 0 , custom_mode="OFFBOARD")
-        self.moveTo(self.position_test[0] , self.position_test[1] , self.position_test[2])
+        self.move_to(self.position_test[0] , self.position_test[1] , self.position_test[2])
         
         x = self.position_test[0] - self.local_position.pose.position.x
         y = self.position_test[1] - self.local_position.pose.position.y
@@ -138,7 +147,7 @@ class DroneTests(unittest.TestCase):
         
         distance = math.sqrt( (x**2) + (y**2) + (z**2) )
 
-        if(distance < 0.3):
+        if(distance < 0.5):
             good_position = True
             
         self.assertTrue(good_position , 
@@ -147,12 +156,12 @@ class DroneTests(unittest.TestCase):
         
     
     def test_modes(self):
-
+        rospy.loginfo("Modes test")
         for key in self.changed_mode.keys():
             if(key == "OFFBOARD"):
-                self.controller.setArm()
+                self.controller.set_arm()
                 time.sleep(1)
-                self.setOffboard()
+                self.set_offboard()
             
             self.mode_service(base_mode = 0 , custom_mode=str(key))
             
