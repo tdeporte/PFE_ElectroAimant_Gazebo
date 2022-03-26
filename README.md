@@ -128,6 +128,61 @@ chmod +x ./QGroundControl.AppImage
 
 ## Configuration
 
+Après avoir finit l'installation de ROS , Gazebo , PX4 et QGroundControl , il faut ajouter notre monde , modèles... dans PX4.
+Pour se faire il suffit de lancer le script **init_project** qui se trouve dans le dossier Configuration/.
+
+Il faut donner comme argument au script le chemin vers le dossier contenant PX4-Autopilot , ici ce serait ~/PX4/PX4-Autopilot/
+
+```
+python3 init_project ~/PX4/PX4-Autopilot/
+```
+
+Une fois le script lancé tous les fichiers de notre projet ont été dispersé dans le proejt PX4 et la simulation peut être lancé.
+
+## Utilisation
+
+Une fois l'installation et la configuration terminées, la simulation ainsi que le script de la mission et celui des tests peuvent être lancé.
+
+Lire les parties **informations** et **Problèmes** avant de lancer la simulation ou les scripts.
+
+Pour lancer la simulation de notre monde:
+
+```
+roslaunch px4 custom.launch
+```
+
+Ensuite pour lancer le script de la mission présent dans Scripts/ :
+
+```
+python3 Drone.py #Les variables tolérances et step seront mise à la valeur par défaut
+
+python3 Drone.py 30 0.2 #Les variables tolerance et step sont initialisées dans cet ordre
+```
+
+Des touches sont assignés pour controler le drone et le flux vidéo
+
+```
+d : Permet d'ordonner au drone d'aller se fixer sur la plaque
+u : Permet d'ordonner au drone de se détacher de la plaque et de se poser
+w : Le retour vidéo est lancé par défaut , pour le fermer si besoin appuyer sur la touche "w"
+```
+
+Enfin pour lancer le script de test présent dans Scripts/ :
+
+```
+python3 DroneTests.py #La position cible du drone est celle par défaut
+
+python3 DroneTest.py 2 2 1 #La position x , y , z est initialisée avec ces coordonnées.
+```
+
+
 ## Informations
 
-Avant de lancer le script de tests il est préférable de lancer **QGroundControl** car pour certaines raisons il faut simuler un contrôleur pour faire passer tous les tests.
+- Les paramètres tolerance et step du script de la mission impactent la fiabilité de placement du drone au centre du QR Code. Les valeurs recommandées sont 30 0.2 ou 40 0.2.
+- Avant de lancer le script de tests il est préférable de lancer **QGroundControl** car pour certaines raisons il faut simuler un contrôleur pour faire passer tous les tests.
+
+## Problèmes possibles
+
+- Si après avoir lancé le monde le drone ne réagit pas au script ou aux commandes, il faut déplacer le contenu du dossier Library qui se trouve dans Configuration/ et le placer dans PX4-Autopilot/Tools/sitl_gazebo/. Ensuite depuis sitl_gazebo/ lancer les commandes **cmake . et make** . Enfin relancer le script init_project pour être sûr d'avoir les bons fichiers ou remplacer le iris.sdf de Tools/sitl_gazebo/models/iris/ par celui de Configuration/models/
+
+- Si le retour caméra n'affiche pas le QR Code sur la plaque ou seulement à une certaine distance cela peut provenir d'un problème d'installation d'installation. Recommencer l'installation résout le problème
