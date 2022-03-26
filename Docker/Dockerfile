@@ -16,9 +16,11 @@ RUN apt-get install -y python3-catkin-tools \
     python3-osrf-pycommon python3-rosdep python3-vcstool git \
     libgeographic-dev ros-noetic-geographic-msgs python3-pip zip qtcreator cmake \
     build-essential genromfs ninja-build exiftool \
-    python3-dev python-is-python3 libxml2 libxml2-dev libxslt-dev qt5-default
+    python3-dev python-is-python3 libxml2 libxml2-dev libxslt-dev qt5-default \
+    python3-rospy 
 
-RUN pip3 install -U lxml future numpy==1.19 opencv-python==4.5.3.56
+RUN pip3 install -U lxml future numpy==1.19 opencv-python==4.5.3.56 \
+    pynput 
 
 #   Set up catkin workspace  
 RUN mkdir -p ~/catkin_ws/src && cd ~/catkin_ws \
@@ -48,11 +50,8 @@ RUN source ~/.bashrc && cd ~/catkin_ws \
 ### PX4
 ##  Install PX4 depend
 #   Download and install Geographiclibencies
-RUN sudo apt-get install wget
-RUN wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh
-RUN chmod +x install_geographiclib_datasets.sh
-RUN ./install_geographiclib_datasets.sh
-RUN rm ./install_geographiclib_datasets.sh
+RUN apt-get install geographiclib-tools -y
+RUN geographiclib-get-geoids egm96-5
 
 #   Install common dependencies
 RUN apt-get update -y
@@ -81,8 +80,13 @@ RUN echo 'export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:~/repos/PX4-Autopilot/bu
     && echo 'export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:~/repos/PX4-Autopilot' >> ~/.bashrc \
     && echo 'export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:~/repos/PX4-Autopilot/Tools/sitl_gazebo' >> ~/.bashrc 
     
+RUN cd && git clone https://github.com/tdeporte/PFE_ElectroAimant_Gazebo.git
+RUN cd ~/PFE_ElectroAimant_Gazebo/Configuration && python3 init_project.py ~/repos/PX4-Autopilot/
+
 RUN source /opt/ros/noetic/setup.bash
 
-WORKDIR root/repos/
+EXPOSE 8887
+
+WORKDIR root/
 
 CMD exec bash && make px4_sitl gazebo
