@@ -195,7 +195,7 @@ Une image contenant le projet dans sa totalité est disponible à l'adresse :
 
 Cette image est publique et son Dockerfile associé est disponible dans le dossier **Docker/** du projet.
 
-Les étapes suivantes sont nécéssaires avant de pouvoir l'utiliser.
+**Les étapes suivantes sont nécéssaires avant de pouvoir l'utiliser.**
 
 ### Installation de Docker 
 
@@ -210,15 +210,15 @@ L'image est publique et récupérable grâce à la commande suivante.
 `docker pull tdeporte/ros_sitl_gazebo:latest`
 
 ### Prodiguer les permissions nécéssaires
-L'outils **xauth** est nécéssaire pour cette étape.
+L'outil **xauth** est nécéssaire pour cette étape.
 
 `sudo apt-get install -y xauth`
 
-Il est nécéssaire de prodiguer au conteneur l'authorisation de communiquer avec la machine hôte.
+Il est nécéssaire de prodiguer au conteneur l'autorisation de communiquer avec la machine hôte.
 
 `xhost +local:*`
 
-Nous recommandons cependant d'annuler l'authorisation après l'arrêt du conteneur.
+Nous recommandons cependant d'annuler l'autorisation après l'arrêt du conteneur.
 
 `xhost -local:*`
 
