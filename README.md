@@ -128,6 +128,142 @@ chmod +x ./QGroundControl.AppImage
 
 ## Configuration
 
+Après avoir finit l'installation de ROS , Gazebo , PX4 et QGroundControl , il faut ajouter notre monde , modèles... dans PX4.
+Pour se faire il suffit de lancer le script **init_project** qui se trouve dans le dossier Configuration/.
+
+Il faut donner comme argument au script le chemin vers le dossier contenant PX4-Autopilot , ici ce serait ~/PX4/PX4-Autopilot/
+
+```
+python3 init_project ~/PX4/PX4-Autopilot/
+```
+
+Une fois le script lancé tous les fichiers de notre projet ont été dispersé dans le proejt PX4 et la simulation peut être lancé.
+
+## Utilisation
+
+Une fois l'installation et la configuration terminées, la simulation ainsi que le script de la mission et celui des tests peuvent être lancé.
+
+Lire les parties **informations** et **Problèmes** avant de lancer la simulation ou les scripts.
+
+Pour lancer la simulation de notre monde:
+
+```
+roslaunch px4 custom.launch
+```
+
+Ensuite pour lancer le script de la mission présent dans Scripts/ :
+
+```
+python3 Drone.py #Les variables tolérances et step seront mise à la valeur par défaut
+
+python3 Drone.py 30 0.2 #Les variables tolerance et step sont initialisées dans cet ordre
+```
+
+Des touches sont assignés pour controler le drone et le flux vidéo
+
+```
+d : Permet d'ordonner au drone d'aller se fixer sur la plaque
+u : Permet d'ordonner au drone de se détacher de la plaque et de se poser
+w : Le retour vidéo est lancé par défaut , pour le fermer si besoin appuyer sur la touche "w"
+```
+
+Enfin pour lancer le script de test présent dans Scripts/ :
+
+```
+python3 DroneTests.py #La position cible du drone est celle par défaut
+
+python3 DroneTest.py 2 2 1 #La position x , y , z est initialisée avec ces coordonnées.
+```
+
+
 ## Informations
 
-Avant de lancer le script de tests il est préférable de lancer **QGroundControl** car pour certaines raisons il faut simuler un contrôleur pour faire passer tous les tests.
+- Les paramètres tolerance et step du script de la mission impactent la fiabilité de placement du drone au centre du QR Code. Les valeurs recommandées sont 30 0.2 ou 40 0.2.
+- Avant de lancer le script de tests il est préférable de lancer **QGroundControl** car pour certaines raisons il faut simuler un contrôleur pour faire passer tous les tests.
+
+## Problèmes possibles
+
+- Si après avoir lancé le monde le drone ne réagit pas au script ou aux commandes, il faut déplacer le contenu du dossier Library qui se trouve dans Configuration/ et le placer dans PX4-Autopilot/Tools/sitl_gazebo/. Ensuite depuis sitl_gazebo/ lancer les commandes **cmake . et make** . Enfin relancer le script init_project pour être sûr d'avoir les bons fichiers ou remplacer le iris.sdf de Tools/sitl_gazebo/models/iris/ par celui de Configuration/models/
+
+- Si le retour caméra n'affiche pas le QR Code sur la plaque ou seulement à une certaine distance cela peut provenir d'un problème d'installation d'installation. Recommencer l'installation résout le problème
+
+## Version "conteneurisée" du projet
+
+Une image contenant le projet dans sa totalité est disponible à l'adresse : 
+
+[https://hub.docker.com/repository/docker/tdeporte/ros_sitl_gazebo](https://hub.docker.com/repository/docker/tdeporte/ros_sitl_gazebo) .
+
+Cette image est publique et son Dockerfile associé est disponible dans le dossier **Docker/** du projet.
+
+**Les étapes suivantes sont nécéssaires avant de pouvoir l'utiliser.**
+
+### Installation de Docker 
+
+Nous vous recommandons de suivre l'installation correspondant à votre envirronement de travail, disponible l'adresse : 
+
+[https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/) .
+
+### Récupération de l'image 
+
+L'image est publique et récupérable grâce à la commande suivante.
+
+```
+sudo docker pull tdeporte/ros_sitl_gazebo:latest
+```
+
+### Prodiguer les permissions nécéssaires
+L'outil **xauth** est nécéssaire pour cette étape.
+
+```
+sudo apt-get install -y xauth
+```
+
+Il est nécéssaire de prodiguer au conteneur l'autorisation de communiquer avec la machine hôte.
+
+```
+xhost +local:*
+```
+
+Nous recommandons cependant d'annuler l'autorisation après l'arrêt du conteneur.
+
+```
+xhost -local:*
+```
+
+### Lancement du conteneur
+Nous préférons lancer le conteneur en tâche de fond dans un premier temps.
+
+```
+docker run -dit --net=host -e DISPLAY -v /tmp/.X11-unix tdeporte/ros_sitl_gazebo
+```
+
+L'identifiant du conteneur nommé plus tard CONTAINER_ID apparait en réponse.
+
+### Lancer une commande dans le conteneur
+Afin d'observer le projet nous recommandons de lancer la commande suivante dans deux terminaux.
+
+```
+docker exec -it CONTAINER_ID bash
+```
+
+Il est alors possible de naviguer comme si le projet était en local.
+
+### Démarrer le logiciel
+Dans un terminal, écrire 
+
+```
+source ~/.bashrc 
+roslaunch px4 custom.launch
+```
+
+La fenêtre de Gazebo affichant la simulation s'ouvre en local.
+
+### Démarrer le script de controle du drone
+Dans un autre terminal, écrire
+
+```
+cd PFE_ElectroAimant_Gazebo/Scripts
+python3 Drone.py
+```
+
+Le retour caméra du drone s'ouvre en local et vous pouvez alors controler le drone.

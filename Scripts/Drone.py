@@ -10,7 +10,10 @@ from DroneCamera import DroneCamera
 import sys
 from std_srvs.srv import Empty, EmptyRequest  
 from pynput import keyboard
+
 import argparse
+import cv2
+
 
 class Drone:
     
@@ -27,7 +30,7 @@ class Drone:
         self.rate = rospy.Rate(10.0)
         self.controller = DroneController() #Objet controller du drone
         self.camera = DroneCamera(self.tolerance) #Objet camera du drone
-        self.thread_on = True #Si True envoie une position au drone sinon non
+        self.send_pos = True #Si True envoie une position au drone sinon non
         self.phase = 1 #Phase du drone (docking = 1 / undocking = 0)
         self.center_pos = PoseStamped() #Position du centre du qr code
         self.gap = 0.25 #Ecart maximum entre la plaque et le drone pour le docking
@@ -47,8 +50,7 @@ class Drone:
         #Récupérer la position courante du drone
         self.current_pos_sub = rospy.Subscriber('/mavros/local_position/pose' , PoseStamped , self.current_pos_callback)
         self.current_pos = PoseStamped()
-        
-        
+                
             
     #Fonction callback du topic de position courante du drone
     def current_pos_callback(self, data):
@@ -57,7 +59,7 @@ class Drone:
     #Fonction de déplacement vers une position avec un standby dans un thread
     def standby_to(self):
         while not rospy.is_shutdown():
-            if( self.thread_on == True ):
+            if( self.send_pos == True ):
                 self.pos_pub.publish(self.pos)
                 self.rate.sleep()
     
@@ -75,9 +77,9 @@ class Drone:
     def on_press(self ,key):
         try:
             if(key.char == "d"):
-                self.thread_on = True
-                self.controller.setArm()
-                self.controller.setOffboard()
+                self.send_pos = True
+                self.controller.set_arm()
+                self.controller.set_offboard()
                 rospy.loginfo("Docking ...")
                 self.phase = 1
                 
@@ -86,6 +88,8 @@ class Drone:
             elif(key.char == "u"):
                 rospy.loginfo("Undocking ...")
                 self.phase = 0
+            elif(key.char == "w"):
+                self.camera.stop_stream()
 
         except AttributeError:
             print('special key pressed: {0}'.format(key))
@@ -93,6 +97,12 @@ class Drone:
     #Fonction d'un threadà part pour écouter les touches
     def listen_key(self):
         with keyboard.Listener(on_press=drone.on_press) as listener:
+            def time_out():
+                while not rospy.is_shutdown():
+                    pass
+                listener.stop()
+            
+            threading.Thread(target=time_out).start()
             listener.join()
             
 
@@ -107,12 +117,12 @@ if __name__ == '__main__':
         thread_key = threading.Thread(target= drone.listen_key)
         thread_key.start()
         
+        drone.camera.start_stream()
+        
         time.sleep(2)
         
         rospy.loginfo("Keys listen ready")
-        
-        # drone.set_target_position(0, 0 , 1)
-    
+            
         #Dimensions de l'image
         height, width, channels = drone.camera.cv_image.shape
 
@@ -123,7 +133,7 @@ if __name__ == '__main__':
         high_height_threshold = height/2 + drone.tolerance
 
         #Boucle de replacement du drone en dessous du centre du QR code
-        while(1):
+        while not rospy.is_shutdown():
             #Stabilisation du drone 
             time.sleep(1)
 
@@ -162,7 +172,7 @@ if __name__ == '__main__':
 
         time.sleep(0.5)
                 
-        while(1):
+        while not rospy.is_shutdown():
                 
             if(drone.phase == 1):
                 #Tant que le laser renvoit  une distance avec la plaque supérieure à 0.25
@@ -170,17 +180,18 @@ if __name__ == '__main__':
                     time.sleep(0.5)
                     drone.set_target_position(drone.center_pos.pose.position.x , drone.center_pos.pose.position.y, drone.current_pos.pose.position.z + (drone.step *2) )
                 else:
-                    drone.thread_on = False
+                    drone.send_pos = False
                     drone.pause_sim(EmptyRequest())
             elif(drone.phase == 0):
                 time.sleep(2)
                 drone.unpause_sim( EmptyRequest())
                 drone.phase = -1
         
-        drone.controller.setAutoLand()
-        drone.controller.setDisarm()          
-        rospy.spin()
-          
+        drone.camera.stop_stream()
+        drone.controller.set_auto_land()
+        drone.controller.set_disarm()    
+        rospy.loginfo("Program exited !")      
+        
 
     except rospy.ROSInterruptException:
         rospy.loginfo("ROS Interruption !")
