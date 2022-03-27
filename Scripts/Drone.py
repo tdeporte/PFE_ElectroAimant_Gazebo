@@ -10,23 +10,20 @@ from DroneCamera import DroneCamera
 import sys
 from std_srvs.srv import Empty, EmptyRequest  
 from pynput import keyboard
+import argparse
 
 class Drone:
     
     def __init__(self):
         rospy.init_node('drone' , anonymous=True)
 
-        #Si des arguments de tolerance et step sont donnée sinon on donne des valeurs par défaut
-        if( len(sys.argv) >= 3 ):
-            #Fait varier les dimensions de la cible au centre de l'image
-            self.tolerance = int(sys.argv[1])
-            
-            #Distance parcourue par le drone lors du replacement 
-            self.step = float(sys.argv[2])
-        else:
-            self.tolerance = 30
-            self.step = 0.2
-        
+        parser = argparse.ArgumentParser(description="Just an example",formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser.add_argument("-t", "--tolerance", type = float , help="Taille de la zone de tolérance", default=30)
+        parser.add_argument("-s", "--step", type=float , help="Pas du drone lors de son repositionnement", default=0.2)
+        args = vars(parser.parse_args())
+        self.tolerance = args["tolerance"]
+        self.step = args["step"]
+
         self.rate = rospy.Rate(10.0)
         self.controller = DroneController() #Objet controller du drone
         self.camera = DroneCamera(self.tolerance) #Objet camera du drone

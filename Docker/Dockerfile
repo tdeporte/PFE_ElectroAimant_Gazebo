@@ -5,6 +5,8 @@ SHELL [ "/bin/bash" , "-c" ]
 
 RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
 
+RUN echo 'source /opt/ros/noetic/setup.bash' >> ~/.bashrc
+
 ### Gazebo
 RUN apt-get install -y curl
 RUN curl -sSL http://get.gazebosim.org | sh
@@ -38,6 +40,7 @@ RUN cd ~/catkin_ws/src
 
 CMD command rosdep update  
  
+ 
 #   Build
 RUN source /opt/ros/noetic/setup.bash && cd ~/catkin_ws && catkin build 
 
@@ -48,7 +51,7 @@ RUN source ~/.bashrc && cd ~/catkin_ws \
     && echo 'export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:~/repos/drones/drone_assets/models' >> ~/.bashrc 
 
 ### PX4
-##  Install PX4 depend
+##  Install PX4 dependences
 #   Download and install Geographiclibencies
 RUN apt-get install geographiclib-tools -y
 RUN geographiclib-get-geoids egm96-5
@@ -82,6 +85,19 @@ RUN echo 'export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:~/repos/PX4-Autopilot/bu
     
 RUN cd && git clone https://github.com/tdeporte/PFE_ElectroAimant_Gazebo.git
 RUN cd ~/PFE_ElectroAimant_Gazebo/Configuration && python3 init_project.py ~/repos/PX4-Autopilot/
+
+### QGroundControl
+##  Install dependences
+#RUN usermod -a -G dialout $USER
+RUN apt-get remove modemmanager -y
+RUN apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
+RUN apt install libqt5gui5 -y
+
+## Add software
+RUN mkdir root/QGroundControl
+COPY QGroundControl.AppImage root/QGroundControl/
+RUN chmod +x root/QGroundControl/./QGroundControl.AppImage
+
 
 RUN source /opt/ros/noetic/setup.bash
 
