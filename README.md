@@ -207,32 +207,44 @@ Nous vous recommandons de suivre l'installation correspondant à votre envirrone
 
 L'image est publique et récupérable grâce à la commande suivante.
 
-`docker pull tdeporte/ros_sitl_gazebo:latest`
+```
+sudo docker pull tdeporte/ros_sitl_gazebo:latest
+```
 
 ### Prodiguer les permissions nécéssaires
 L'outil **xauth** est nécéssaire pour cette étape.
 
-`sudo apt-get install -y xauth`
+```
+sudo apt-get install -y xauth
+```
 
 Il est nécéssaire de prodiguer au conteneur l'autorisation de communiquer avec la machine hôte.
 
-`xhost +local:*`
+```
+xhost +local:*
+```
 
 Nous recommandons cependant d'annuler l'autorisation après l'arrêt du conteneur.
 
-`xhost -local:*`
+```
+xhost -local:*
+```
 
 ### Lancement du conteneur
 Nous préférons lancer le conteneur en tâche de fond dans un premier temps.
 
-`docker run -dit --net=host -e DISPLAY -v /tmp/.X11-unix tdeporte/ros_sitl_gazebo`
+```
+docker run -dit --net=host -e DISPLAY -v /tmp/.X11-unix tdeporte/ros_sitl_gazebo
+```
 
 L'identifiant du conteneur nommé plus tard CONTAINER_ID apparait en réponse.
 
 ### Lancer une commande dans le conteneur
 Afin d'observer le projet nous recommandons de lancer la commande suivante dans deux terminaux.
 
-`docker exec -it CONTAINER_ID bash`
+```
+docker exec -it CONTAINER_ID bash
+```
 
 Il est alors possible de naviguer comme si le projet était en local.
 
