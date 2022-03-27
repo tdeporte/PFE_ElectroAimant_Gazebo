@@ -154,9 +154,9 @@ roslaunch px4 custom.launch
 Ensuite pour lancer le script de la mission présent dans Scripts/ :
 
 ```
-python3 Drone.py #Les variables tolérances et step seront mise à la valeur par défaut
+python3 Drone.py #Les variables tolérances, step et le retour camera seront mise à la valeur par défaut. C'est à dire 30 0.2 et 0 (éteint)
 
-python3 Drone.py 30 0.2 #Les variables tolerance et step sont initialisées dans cet ordre
+python3 Drone.py -t 30 -s 0.2 -c 1 
 ```
 
 Des touches sont assignés pour controler le drone et le flux vidéo
@@ -164,7 +164,7 @@ Des touches sont assignés pour controler le drone et le flux vidéo
 ```
 d : Permet d'ordonner au drone d'aller se fixer sur la plaque
 u : Permet d'ordonner au drone de se détacher de la plaque et de se poser
-w : Le retour vidéo est lancé par défaut , pour le fermer si besoin appuyer sur la touche "w"
+w : Le retour vidéo n'est pas lancé par défaut mais si vous le lancer, pour le fermer appuyer sur la touche "w"
 ```
 
 Enfin pour lancer le script de test présent dans Scripts/ :
@@ -187,6 +187,8 @@ python3 DroneTest.py 2 2 1 #La position x , y , z est initialisée avec ces coor
 - Si après avoir lancé le monde le drone ne réagit pas au script ou aux commandes, il faut déplacer le contenu du dossier Library qui se trouve dans Configuration/ et le placer dans PX4-Autopilot/Tools/sitl_gazebo/. Ensuite depuis sitl_gazebo/ lancer les commandes **cmake . et make** . Enfin relancer le script init_project pour être sûr d'avoir les bons fichiers ou remplacer le iris.sdf de Tools/sitl_gazebo/models/iris/ par celui de Configuration/models/
 
 - Si le retour caméra n'affiche pas le QR Code sur la plaque ou seulement à une certaine distance cela peut provenir d'un problème d'installation d'installation. Recommencer l'installation résout le problème
+
+- Si le retour caméra est activé il est possible que cela impacte les performances du drone à trouver le centre du qr code. 
 
 ## Version "conteneurisée" du projet
 

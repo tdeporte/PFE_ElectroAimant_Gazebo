@@ -23,10 +23,12 @@ class Drone:
         parser = argparse.ArgumentParser(description="Just an example",formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         parser.add_argument("-t", "--tolerance", type = float , help="Taille de la zone de tolérance", default=30)
         parser.add_argument("-s", "--step", type=float , help="Pas du drone lors de son repositionnement", default=0.2)
+        parser.add_argument("-c", "--camera", type=int , help="Retour caméra ou non", default=0)
         args = vars(parser.parse_args())
         self.tolerance = args["tolerance"]
         self.step = args["step"]
-
+        self.stream_on = args["camera"]
+        
         self.rate = rospy.Rate(10.0)
         self.controller = DroneController() #Objet controller du drone
         self.camera = DroneCamera(self.tolerance) #Objet camera du drone
@@ -117,7 +119,8 @@ if __name__ == '__main__':
         thread_key = threading.Thread(target= drone.listen_key)
         thread_key.start()
         
-        drone.camera.start_stream()
+        if(drone.stream_on == True):
+            drone.camera.start_stream()
         
         time.sleep(2)
         
@@ -187,7 +190,9 @@ if __name__ == '__main__':
                 drone.unpause_sim( EmptyRequest())
                 drone.phase = -1
         
-        drone.camera.stop_stream()
+        if(drone.stream_on == True):
+            drone.camera.stop_stream()
+        
         drone.controller.set_auto_land()
         drone.controller.set_disarm()    
         rospy.loginfo("Program exited !")      
