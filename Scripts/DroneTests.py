@@ -5,7 +5,7 @@ from DroneController import DroneController
 import rospy
 from mavros_msgs.srv import SetMode
 from geometry_msgs.msg import PoseStamped
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, Range
 from mavros_msgs.msg import State
 import time
 import math
@@ -25,7 +25,7 @@ class DroneTests(unittest.TestCase):
         
         self.timeout = 1
         self.changed_mode = {"AUTO.LOITER" : False , "AUTO.LAND" : False}
-        self.topics_ready = {'local_pos' : False , 'camera' : False , 'state' : False}
+        self.topics_ready = {'local_pos' : False , 'camera' : False , 'state' : False , 'laser' : False}
         self.tests_ready = False
         
         if( len(sys.argv) != 4):
@@ -38,9 +38,11 @@ class DroneTests(unittest.TestCase):
         self.local_position = PoseStamped()
         self.camera = Image()
         self.state = State()
+        self.laser = Range()
         
         self.local_pos_sub = rospy.Subscriber('/mavros/local_position/pose' , PoseStamped , self.local_pos_callback)
         self.camera_sub = rospy.Subscriber('/iris/camera_red_iris/image_raw' , Image, self.camera_callback)
+        self.laser_sub = rospy.Subscriber('/iris_odom/range_down', Range, self.laser_callback)
         self.state_sub = rospy.Subscriber('mavros/state', State, self.state_callback)
         
         self.mode_service = rospy.ServiceProxy('/mavros/set_mode', SetMode)
@@ -70,6 +72,12 @@ class DroneTests(unittest.TestCase):
         
         if not self.topics_ready['camera']:
             self.topics_ready['camera'] = True
+            
+    def laser_callback(self , data):
+        self.laser = data
+        
+        if not self.topics_ready['laser']:
+            self.topics_ready['laser'] = True
     
     #
     # Helper methods

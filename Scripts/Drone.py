@@ -7,12 +7,10 @@ from DroneController import DroneController
 import threading
 import time
 from DroneCamera import DroneCamera
-import sys
 from std_srvs.srv import Empty, EmptyRequest  
 from pynput import keyboard
 
 import argparse
-import cv2
 
 
 class Drone:
