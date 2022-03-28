@@ -22,7 +22,7 @@ RUN apt-get install -y python3-catkin-tools \
     python3-rospy 
 
 RUN pip3 install -U lxml future numpy==1.19 opencv-python==4.5.3.56 \
-    pynput 
+    pynput argparse
 
 #   Set up catkin workspace  
 RUN mkdir -p ~/catkin_ws/src && cd ~/catkin_ws \

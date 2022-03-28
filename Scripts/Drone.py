@@ -18,14 +18,15 @@ class Drone:
     def __init__(self):
         rospy.init_node('drone' , anonymous=True)
 
+        #Récupération des arguments 
         parser = argparse.ArgumentParser(description="Just an example",formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         parser.add_argument("-t", "--tolerance", type = float , help="Taille de la zone de tolérance", default=30)
         parser.add_argument("-s", "--step", type=float , help="Pas du drone lors de son repositionnement", default=0.2)
         parser.add_argument("-c", "--camera", type=int , help="Retour caméra ou non", default=0)
         args = vars(parser.parse_args())
-        self.tolerance = args["tolerance"]
-        self.step = args["step"]
-        self.stream_on = args["camera"]
+        self.tolerance = args["tolerance"] #Taille de la zone de tolérance
+        self.step = args["step"] #Pas du drone lors du repositionnement
+        self.stream_on = args["camera"] #Retour caméra ou non
         
         self.rate = rospy.Rate(10.0)
         self.controller = DroneController() #Objet controller du drone
@@ -78,7 +79,9 @@ class Drone:
         try:
             if(key.char == "d"):
                 self.send_pos = True
+                #On arme le drone
                 self.controller.set_arm()
+                #Le drone décolle
                 self.controller.set_offboard()
                 rospy.loginfo("Docking ...")
                 self.phase = 1
@@ -87,9 +90,17 @@ class Drone:
                 drone.set_target_position(self.pos.pose.position.x, self.pos.pose.position.y , self.current_pos.pose.position.z + 1 )
             elif(key.char == "u"):
                 rospy.loginfo("Undocking ...")
+                #On passe à la phase de décrochage du drone
                 self.phase = 0
             elif(key.char == "w"):
-                self.camera.stop_stream()
+                #Désactive l'affichage du retour caméra
+                if(drone.stream_on == True):
+                    drone.camera.stop_stream()
+                    drone.stream_on = False
+                #Active l'affichage du retour caméra
+                else:
+                    drone.camera.start_stream()
+                    drone.stream_on = True
 
         except AttributeError:
             print('special key pressed: {0}'.format(key))
@@ -179,19 +190,24 @@ if __name__ == '__main__':
                 #Tant que le laser renvoit  une distance avec la plaque supérieure à 0.25
                 if(drone.laser_distance > drone.gap):
                     time.sleep(0.5)
+                    #Le drone gagne en altitude
                     drone.set_target_position(drone.center_pos.pose.position.x , drone.center_pos.pose.position.y, drone.current_pos.pose.position.z + (drone.step *2) )
                 else:
+                    #On met la simulation en pause pour simuler l'électromaimant
                     drone.send_pos = False
                     drone.pause_sim(EmptyRequest())
+            #Phase d'undocking, on retire la pause
             elif(drone.phase == 0):
                 time.sleep(2)
                 drone.unpause_sim( EmptyRequest())
                 drone.phase = -1
-        
+        #On stoppe l'affichage du retour caméra
         if(drone.stream_on == True):
             drone.camera.stop_stream()
         
+        #On passe le drone en mode "Atterissage automatique"
         drone.controller.set_auto_land()
+        #On désarme le drone
         drone.controller.set_disarm()    
         rospy.loginfo("Program exited !")      
         
