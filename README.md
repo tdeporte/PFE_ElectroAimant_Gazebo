@@ -270,3 +270,7 @@ python3 Drone.py
 ```
 
 Le retour caméra du drone s'ouvre en local et vous pouvez alors controler le drone.
+
+Le script de test nécéssite QGroundControl pour opérer efficacement, dans sa version actuelle le conteneur ne permet pas d'ouvrir ce logiciel.
+Nous recommandons donc d'utiliser la version classique sur logiciel si l'on veut lancer le script de tests.
+
