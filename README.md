@@ -181,6 +181,7 @@ python3 DroneTest.py 2 2 1 #La position x , y , z est initialisée avec ces coor
 - Les paramètres tolerance et step du script de la mission impactent la fiabilité de placement du drone au centre du QR Code. Les valeurs recommandées sont 30 0.2 ou 40 0.2.
 - Avant de lancer le script de tests il est préférable de lancer **QGroundControl** car pour certaines raisons il faut simuler un contrôleur pour faire passer tous les tests.
 - Notre première simulation faite avec Unity peut être récupérer au lien suivant: https://github.com/jessynlbe/PFE_M2
+- Les fichiers qui sont déplacés dans le projet PX4 sont envoyés dans les répertoires suivant : Tools/sitl_gazebo/models(iris / rotor_descriptions / plate) , Tools/sitl_gazebo/worlds , launch/.
 
 ## Problèmes possibles
 
